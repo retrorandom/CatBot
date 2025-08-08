@@ -96,10 +96,6 @@ async def load_cogs():
                     print(f"Loaded cog: {filename[:-3]}")
                 except Exception as e:
                     print(f"Failed to load cog {filename[:-3]}: {e}")
-    else:
-        print("⚠️  No cogs folder found - creating empty cogs directory")
-        os.makedirs(COGS_DIR, exist_ok=True)
-
 
 async def main():
     async with bot:
