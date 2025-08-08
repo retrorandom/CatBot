@@ -12,8 +12,9 @@ class Utility(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name='uptime')
+    @commands.hybrid_command(name='uptime', description="Show how long the bot has been running")
     async def uptime(self, ctx):
+        """Shows how long the bot has been online."""
         uptime = format_uptime(time.time() - self.bot.start_time)
         embed = discord.Embed(
             title="⏱️ Uptime",
@@ -22,13 +23,14 @@ class Utility(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.command(name='help')
+    @commands.hybrid_command(name='help', description="Show a list of available commands")
     async def help_command(self, ctx):
+        """Shows the help message for CatBot."""
         embed = discord.Embed(
             title="🐱 CatBot Commands",
-            description="Here's what I can do! Use these commands with `>`",
+            description="Here's what I can do! Use these commands with `>` or `/`",
             color=discord.Color.pink(),
-            timestamp=ctx.message.created_at
+            timestamp=ctx.message.created_at if hasattr(ctx, "message") else discord.utils.utcnow()
         )
 
         embed.add_field(name="😺 Fun Commands", value=(
@@ -46,9 +48,11 @@ class Utility(commands.Cog):
             "`>uptime` — See how long the bot has been running\n"
             "`>help` — Show this message"
         ), inline=False)
-        
 
-        embed.set_footer(text=f"Requested by {ctx.author}", icon_url=ctx.author.avatar.url if ctx.author.avatar else None)
+        embed.set_footer(
+            text=f"Requested by {ctx.author}",
+            icon_url=ctx.author.avatar.url if ctx.author.avatar else None
+        )
 
         await ctx.send(embed=embed)
 

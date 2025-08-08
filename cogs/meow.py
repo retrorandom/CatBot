@@ -50,15 +50,16 @@ class Meow(commands.Cog):
                 except Exception as e:
                     print(f"Failed to add reaction: {e}")
 
-                # Count the meow
+                # Count the meows
                 self.meow_data["discord"].setdefault(guild_id, {})
                 user_id = str(message.author.id)
                 self.meow_data["discord"][guild_id].setdefault(user_id, 0)
                 self.meow_data["discord"][guild_id][user_id] += 1
                 save_data(self.meow_data)
 
-    @commands.command(name='meow')
+    @commands.hybrid_command(name='meow', description="Check how many times you've meowed")
     async def meow_counter(self, ctx):
+        """Shows your personal meow count."""
         user_id = str(ctx.author.id)
         guild_id = str(ctx.guild.id) if ctx.guild else "DM"
         count = self.meow_data["discord"].get(guild_id, {}).get(user_id, 0)
@@ -69,13 +70,15 @@ class Meow(commands.Cog):
         )
         await ctx.send(embed=embed)
 
-    @commands.command(name='meowboard')
+    @commands.hybrid_command(name='meowboard', description="Show the meow leaderboard")
     async def meow_leaderboard(self, ctx):
+        """Shows the top 10 meowers in the server."""
         guild_id = str(ctx.guild.id) if ctx.guild else "DM"
         guild_counts = self.meow_data["discord"].get(guild_id, {})
         if not guild_counts:
             await ctx.send("No meows yet! Start meowing 🐾")
             return
+
         sorted_users = sorted(guild_counts.items(), key=lambda x: x[1], reverse=True)
         leaderboard = ""
         for i, (user_id, count) in enumerate(sorted_users[:10], start=1):

@@ -7,11 +7,12 @@ import asyncio
 import random
 import sys
 
+# ---------------- Config Handling ---------------- #
+
 def ensure_config_exists():
     config_path = os.path.join(os.path.dirname(__file__), 'config.json')
 
     if not os.path.exists(config_path):
-        # Create default config with your exact structure
         default_config = {
             "discord_token": ""
         }
@@ -24,15 +25,12 @@ def ensure_config_exists():
         return False
     return True
 
-
 def load_config():
     config_path = os.path.join(os.path.dirname(__file__), 'config.json')
 
-    # Ensure config exists first
     if not ensure_config_exists():
         sys.exit(1)
 
-    # Load the config
     try:
         with open(config_path, 'r') as f:
             config = json.load(f)
@@ -40,25 +38,26 @@ def load_config():
         print(f"Error reading config.json: {e}")
         sys.exit(1)
 
-    # Validate token exists and isn't empty
     if not config.get('discord_token') or config['discord_token'].strip() == "":
         print("Please set your Discord bot token in config.json")
-        print("The discord_token field is empty")
         sys.exit(1)
 
     return config
 
 config = load_config()
 
+# ---------------- Bot Setup ---------------- #
+
 intents = discord.Intents.default()
 intents.message_content = True
 
+# In Pycord, commands.Bot automatically supports app commands (slash commands)
 bot = commands.Bot(command_prefix=">", intents=intents, help_command=None)
 
 start_time = time.time()
 bot.start_time = start_time
 
-# List of rotating statuses
+# Rotating statuses
 statuses = [
     discord.Game("Meowing Back At Cat's ₍^. .^₎⟆"),
     discord.Game("Chasing lasers 🔦"),
@@ -69,23 +68,34 @@ statuses = [
     discord.Activity(type=discord.ActivityType.competing, name="Cat Olympics"),
 ]
 
-
-@tasks.loop(seconds=60)  # Change every 60 seconds
+@tasks.loop(seconds=60)
 async def rotate_status():
     new_status = random.choice(statuses)
     await bot.change_presence(status=discord.Status.online, activity=new_status)
 
+# ---------------- Events ---------------- #
 
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user} ({bot.user.id})')
     await rotate_status.start()
 
+    try:
+        total_synced = 0
+        for guild in bot.guilds:
+            bot.tree.copy_global_to(guild=discord.Object(id=guild.id))
+            synced = await bot.tree.sync(guild=discord.Object(id=guild.id))
+            total_synced += len(synced)
+            print(f"Synced {len(synced)} slash commands instantly to guild: {guild.name} ({guild.id})")
 
-# Absolute path to cogs folder
+        print(f"🔹 Total commands synced across {len(bot.guilds)} guilds: {total_synced}")
+    except Exception as e:
+        print(f"Failed to sync slash commands: {e}")
+
+# ---------------- Cogs Loader ---------------- #
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 COGS_DIR = os.path.join(BASE_DIR, 'cogs')
-
 
 async def load_cogs():
     if os.path.exists(COGS_DIR):
@@ -97,6 +107,8 @@ async def load_cogs():
                 except Exception as e:
                     print(f"Failed to load cog {filename[:-3]}: {e}")
 
+# ---------------- Main Entry ---------------- #
+
 async def main():
     async with bot:
         await load_cogs()
@@ -106,10 +118,9 @@ async def main():
             print("Invalid Discord token! Please check your config.json")
             sys.exit(1)
         except KeyboardInterrupt:
-            print("\nCat bot stopped by user")
+            print("\nCatBot stopped by user")
         except Exception as e:
             print(f"An error occurred: {e}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

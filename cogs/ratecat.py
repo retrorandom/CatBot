@@ -6,8 +6,12 @@ class CatRating(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name='ratecat')
+    @commands.hybrid_command(
+        name='ratecat',
+        description="Rate someone as a cat from 1 to 10"
+    )
     async def rate_cat(self, ctx, user: discord.Member = None):
+        """Rates a mentioned user as a cat."""
         if not user:
             await ctx.send("Mention someone to rate as a cat! (`>ratecat @user`)")
             return
